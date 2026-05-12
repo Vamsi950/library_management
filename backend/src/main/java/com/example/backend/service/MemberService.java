@@ -1,23 +1,56 @@
 package com.example.backend.service;
 
-import com.example.backend.entity.Member;
-import com.example.backend.repository.MemberRepository;
-import org.springframework.beans.factory.annotation.Autowired;
+import java.util.List;
+
 import org.springframework.stereotype.Service;
+
+import com.example.backend.model.Member;
+import com.example.backend.repository.MemberRepository;
 
 @Service
 public class MemberService {
 
-    @Autowired
-    private MemberRepository memberRepository;
+    private final MemberRepository memberRepository;
 
-    // Register Member
+    public MemberService(MemberRepository memberRepository) {
+        this.memberRepository = memberRepository;
+    }
+
     public Member registerMember(Member member) {
+        if (member.getActive() == null) {
+            member.setActive(Boolean.TRUE);
+        }
         return memberRepository.save(member);
     }
 
-    
     public Member getMemberById(Long id) {
         return memberRepository.findById(id).orElse(null);
+    }
+
+    public List<Member> getAllMembers() {
+        return memberRepository.findAll();
+    }
+
+    public Member updateMember(Long id, Member member) {
+        Member existingMember = memberRepository.findById(id).orElse(null);
+        if (existingMember == null) {
+            return null;
+        }
+
+        existingMember.setName(member.getName());
+        existingMember.setEmail(member.getEmail());
+        if (member.getActive() != null) {
+            existingMember.setActive(member.getActive());
+        }
+        return memberRepository.save(existingMember);
+    }
+
+    public boolean deleteMember(Long id) {
+        if (!memberRepository.existsById(id)) {
+            return false;
+        }
+
+        memberRepository.deleteById(id);
+        return true;
     }
 }

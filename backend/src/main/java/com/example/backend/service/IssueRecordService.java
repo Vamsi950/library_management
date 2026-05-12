@@ -1,36 +1,38 @@
 package com.example.backend.service;
 
-import com.example.backend.entity.Book;
-import com.example.backend.entity.IssueRecord;
-import com.example.backend.entity.Member;
-import com.example.backend.repository.BookRepository;
-import com.example.backend.repository.IssueRecordRepository;
-import com.example.backend.repository.MemberRepository;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Service;
-
 import java.time.LocalDate;
 import java.util.List;
+
+import org.springframework.stereotype.Service;
+
+import com.example.backend.model.Book;
+import com.example.backend.model.IssuesRecord;
+import com.example.backend.model.Member;
+import com.example.backend.repository.BookRepository;
+import com.example.backend.repository.IssuesRecordRepository;
+import com.example.backend.repository.MemberRepository;
 
 @Service
 public class IssueRecordService {
 
-    @Autowired
-    private IssueRecordRepository issueRecordRepository;
+    private final IssuesRecordRepository issueRecordRepository;
+    private final BookRepository bookRepository;
+    private final MemberRepository memberRepository;
 
-    @Autowired
-    private BookRepository bookRepository;
+    public IssueRecordService(
+            IssuesRecordRepository issueRecordRepository,
+            BookRepository bookRepository,
+            MemberRepository memberRepository) {
+        this.issueRecordRepository = issueRecordRepository;
+        this.bookRepository = bookRepository;
+        this.memberRepository = memberRepository;
+    }
 
-    @Autowired
-    private MemberRepository memberRepository;
-
-    // Issue Book
     public String issueBook(Long bookId, Long memberId) {
-
         Book book = bookRepository.findById(bookId).orElse(null);
         Member member = memberRepository.findById(memberId).orElse(null);
 
-        if (book == null) {
+        if(book == null) {
             return "Book not found";
         }
 
@@ -38,58 +40,71 @@ public class IssueRecordService {
             return "Member not found";
         }
 
-        // Check availability
-        if (!book.isAvailable()) {
+        if (Boolean.FALSE.equals(book.getAvailable())) {
             return "Book is not available";
         }
 
-        // Check active issues count
-        List<IssueRecord> activeIssues =
-                issueRecordRepository.findByMemberAndReturnDateIsNull(member);
-
+        List<IssuesRecord> activeIssues = issueRecordRepository.findByMemberAndReturnDateIsNull(member);
         if (activeIssues.size() >= 3) {
             return "Member cannot issue more than 3 books";
         }
 
-        // Create issue record
-        IssueRecord issueRecord = new IssueRecord();
+        IssuesRecord issueRecord = new IssuesRecord();
         issueRecord.setBook(book);
         issueRecord.setMember(member);
         issueRecord.setIssueDate(LocalDate.now());
-
         issueRecordRepository.save(issueRecord);
 
-        // Mark book unavailable
-        book.setAvailable(false);
+        book.setAvailable(Boolean.FALSE);
         bookRepository.save(book);
 
         return "Book issued successfully";
     }
 
-    // Return Book
     public String returnBook(Long issueId) {
-
-        IssueRecord issueRecord =
-                issueRecordRepository.findById(issueId).orElse(null);
+        IssuesRecord issueRecord = issueRecordRepository.findById(issueId).orElse(null);
 
         if (issueRecord == null) {
             return "Issue record not found";
         }
 
-        // Already returned
         if (issueRecord.getReturnDate() != null) {
             return "Book already returned";
         }
 
-        // Update return date
         issueRecord.setReturnDate(LocalDate.now());
         issueRecordRepository.save(issueRecord);
 
-        // Make book available again
         Book book = issueRecord.getBook();
-        book.setAvailable(true);
+        book.setAvailable(Boolean.TRUE);
         bookRepository.save(book);
 
         return "Book returned successfully";
+    }
+
+    public List<IssuesRecord> getAllIssueRecords() {
+        return issueRecordRepository.findAll();
+    }
+
+    public IssuesRecord getIssueRecordById(Long id) {
+        return issueRecordRepository.findById(id).orElse(null);
+    }
+
+    public boolean deleteIssueRecord(Long id) {
+        if (!issueRecordRepository.existsById(id)) {
+            return false;
+        }
+
+        issueRecordRepository.deleteById(id);
+        return true;
+    }
+
+    public List<IssuesRecord> getIssuesByMember(Long memberId) {
+        Member member = memberRepository.findById(memberId).orElse(null);
+        if (member == null) {
+            return List.of();
+        }
+
+        return issueRecordRepository.findByMember(member);
     }
 }

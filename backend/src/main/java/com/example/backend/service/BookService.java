@@ -1,52 +1,68 @@
 package com.example.backend.service;
 
-import com.example.backend.entity.Book;
-import com.example.backend.repository.BookRepository;
+import java.util.List;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import java.util.List;
+import com.example.backend.model.Book;
+import com.example.backend.repository.BookRepository;
 
 @Service
 public class BookService {
 
-    @Autowired
-    private BookRepository bookRepository;
+    private final BookRepository bookRepository;
 
-    // Add Book
+    public BookService(BookRepository bookRepository) {
+        this.bookRepository = bookRepository;
+    }
+
     public Book addBook(Book book) {
-        book.setAvailable(true);
+        if (book.getAvailable() == null) {
+            book.setAvailable(Boolean.TRUE);
+        }
         return bookRepository.save(book);
     }
 
-    // Get All Books
     public List<Book> getAllBooks() {
         return bookRepository.findAll();
     }
 
-    // Get Available Books
     public List<Book> getAvailableBooks() {
-        return bookRepository.findByAvailable(true);
+        return bookRepository.findByAvailableTrue();
     }
 
-    // Search By Title
     public List<Book> searchByTitle(String title) {
         return bookRepository.findByTitleContainingIgnoreCase(title);
     }
 
-    // Search By Author
     public List<Book> searchByAuthor(String author) {
         return bookRepository.findByAuthorContainingIgnoreCase(author);
     }
 
-    // Get Book By Id
     public Book getBookById(Long id) {
         return bookRepository.findById(id).orElse(null);
     }
 
-    // Update Book
-    public Book updateBook(Book book) {
-        return bookRepository.save(book);
+    public Book updateBook(Long id, Book book) {
+        Book existingBook = bookRepository.findById(id).orElse(null);
+        if (existingBook == null) {
+            return null;
+        }
+
+        existingBook.setTitle(book.getTitle());
+        existingBook.setAuthor(book.getAuthor());
+        if (book.getAvailable() != null) {
+            existingBook.setAvailable(book.getAvailable());
+        }
+        return bookRepository.save(existingBook);
+    }
+
+    public boolean deleteBook(Long id) {
+        if (!bookRepository.existsById(id)) {
+            return false;
+        }
+
+        bookRepository.deleteById(id);
+        return true;
     }
 }
