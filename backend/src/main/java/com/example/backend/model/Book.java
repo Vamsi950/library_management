@@ -1,9 +1,42 @@
 package com.example.backend.model;
 
-<<<<<<< HEAD
+import jakarta.persistence.CascadeType;
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.OneToMany;
+import jakarta.persistence.Table;
+import java.util.ArrayList;
+import java.util.List;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.NoArgsConstructor;
+import lombok.ToString;
 
-=======
->>>>>>> e8ab2c5a6d6f09dd72c09ee0c34882f2cf1a9f99
+@Entity
+@Table(name = "books")
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
+@EqualsAndHashCode(exclude = "issuesRecords")
+@ToString(exclude = "issuesRecords")
 public class Book {
-    
+
+	@Id
+	@GeneratedValue(strategy = GenerationType.IDENTITY)
+	private Long bookId;
+
+	private String title;
+
+	private String author;
+
+	private Boolean availability;
+
+	@OneToMany(mappedBy = "book", cascade = CascadeType.ALL, orphanRemoval = true)
+	@Builder.Default
+	private List<IssuesRecord> issuesRecords = new ArrayList<>();
 }
