@@ -1,5 +1,9 @@
 package com.example.backend.model;
 
+
+public class IssuesRecord {
+   
+=======
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
@@ -41,5 +45,6 @@ public class IssuesRecord {
 	@ManyToOne(fetch = FetchType.LAZY)
 	@JoinColumn(name = "member_id", nullable = false)
 	private Member member;
+
 }
 
